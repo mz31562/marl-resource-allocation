@@ -1,0 +1,27 @@
+# Core
+torch>=2.0.0
+numpy>=1.24.0
+gymnasium>=0.28.0
+pettingzoo>=1.24.0
+
+# Visualization
+matplotlib>=3.7.0
+seaborn>=0.12.0
+plotly>=5.14.0
+tensorboard>=2.13.0
+
+# Experiment tracking
+wandb>=0.15.0
+
+# Utilities
+pyyaml>=6.0
+tqdm>=4.65.0
+pandas>=2.0.0
+
+# Testing
+pytest>=7.3.0
+pytest-cov>=4.1.0
+
+# For FL project add:
+opacus>=1.4.0  # Differential privacy
+crypten>=0.4.0  # Secure computation
