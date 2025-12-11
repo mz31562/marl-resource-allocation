@@ -232,7 +232,7 @@ def statistical_comparison(method1_results, method2_results, method1_name, metho
 
 def main():
     """Main evaluation pipeline."""
-    n_agents = 5
+    n_agents = 10
     device = 'cuda' if torch.cuda.is_available() else 'cpu'
     
     # Create environment
