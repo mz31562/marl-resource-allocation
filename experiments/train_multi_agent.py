@@ -11,7 +11,7 @@ import json
 from datetime import datetime
 
 def train_maddpg(
-    n_agents=10,
+    n_agents=20,
     n_episodes=2000,
     max_steps=24,
     batch_size=64,
@@ -207,7 +207,7 @@ def plot_training_results(total_rewards, individual_rewards, actor_losses, criti
 
 if __name__ == '__main__':
     maddpg, rewards = train_maddpg(
-        n_agents=10,
+        n_agents=20,
         n_episodes=2000,
         batch_size=64
     )

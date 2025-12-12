@@ -16,6 +16,8 @@ class SmartGridEnv(gym.Env):
         grid_capacity: Maximum grid load (kW)
         battery_capacity: Battery storage per agent (kWh)
         episode_length: Steps per episode (hours)
+        terminal_battery_value: Reward coefficient for final battery level
+                               (0.0 = no incentive, 10.0 = strong incentive)
     """
     
     metadata = {'render_modes': ['human', 'rgb_array']}
@@ -26,6 +28,7 @@ class SmartGridEnv(gym.Env):
         grid_capacity: float = 50.0,
         battery_capacity: float = 10.0,
         episode_length: int = 24,
+        terminal_battery_value: float = 0.0,  # NEW PARAMETER
         seed: int = None
     ):
         super().__init__()
@@ -34,6 +37,7 @@ class SmartGridEnv(gym.Env):
         self.grid_capacity = grid_capacity
         self.battery_capacity = battery_capacity
         self.episode_length = episode_length
+        self.terminal_battery_value = terminal_battery_value  # NEW
         
         # Set random seed
         if seed is not None:
@@ -155,6 +159,12 @@ class SmartGridEnv(gym.Env):
         # Check if episode is done
         done = self.current_step >= self.episode_length
         truncated = False
+        
+        # NEW: Add terminal rewards if episode is ending
+        if done and self.terminal_battery_value > 0:
+            for i in range(self.n_agents):
+                terminal_bonus = self.battery_levels[i] * self.terminal_battery_value
+                rewards[i] += terminal_bonus
         
         # Get new observations
         observations = self._get_observations()

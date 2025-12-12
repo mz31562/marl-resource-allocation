@@ -232,7 +232,7 @@ def statistical_comparison(method1_results, method2_results, method1_name, metho
 
 def main():
     """Main evaluation pipeline."""
-    n_agents = 10
+    n_agents = 20
     device = 'cuda' if torch.cuda.is_available() else 'cpu'
     
     # Create environment
@@ -254,10 +254,7 @@ def main():
     for key, value in maddpg_metrics.items():
         print(f"{key}: {value:.4f}")
     
-    # Plot results
     plot_evaluation_results(maddpg_results, maddpg_metrics)
-    
-    # TODO: Compare with baselines if available
     
     return maddpg_results, maddpg_metrics
 
