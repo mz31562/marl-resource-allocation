@@ -62,7 +62,7 @@ def ablation_num_agents(agent_counts=[2, 5, 10, 20], n_episodes=500):
         }
     
     # Plot results
-    plot_ablation_num_agents(results)
+    plot_ablation_num_agents(results, n_episodes)
     
     return results
 
@@ -72,8 +72,6 @@ def ablation_communication(n_agents=5, n_episodes=500):
     
     Research Question: Does observing neighbor actions help?
     """
-    # TODO: Modify environment to enable/disable communication
-    # For now, this is a placeholder
     pass
 
 def ablation_reward_structure(n_agents=5, n_episodes=500):
@@ -87,13 +85,12 @@ def ablation_reward_structure(n_agents=5, n_episodes=500):
     """
     pass
 
-def plot_ablation_num_agents(results):
+def plot_ablation_num_agents(results, n_episodes):
     """Plot ablation study results."""
     fig, axes = plt.subplots(2, 2, figsize=(14, 10))
     
     agent_counts = sorted(results.keys())
     
-    # 1. Learning curves
     ax1 = axes[0, 0]
     for n in agent_counts:
         rewards = results[n]['rewards']
@@ -107,7 +104,6 @@ def plot_ablation_num_agents(results):
     ax1.legend()
     ax1.grid(True, alpha=0.3)
     
-    # 2. Final performance
     ax2 = axes[0, 1]
     means = [results[n]['final_mean'] for n in agent_counts]
     stds = [results[n]['final_std'] for n in agent_counts]
@@ -118,7 +114,6 @@ def plot_ablation_num_agents(results):
     ax2.set_title('Final Performance')
     ax2.grid(True, alpha=0.3, axis='y')
     
-    # 3. Convergence speed
     ax3 = axes[1, 0]
     convergence = [results[n]['convergence_episode'] or n_episodes 
                   for n in agent_counts]
@@ -128,7 +123,6 @@ def plot_ablation_num_agents(results):
     ax3.set_title('Convergence Speed')
     ax3.grid(True, alpha=0.3)
     
-    # 4. Scalability (reward per agent)
     ax4 = axes[1, 1]
     per_agent_reward = [results[n]['final_mean'] / n for n in agent_counts]
     ax4.plot(agent_counts, per_agent_reward, marker='s', linewidth=2, markersize=8, color='green')

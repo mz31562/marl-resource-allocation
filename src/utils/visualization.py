@@ -20,21 +20,18 @@ def visualize_episode_heatmap(env_history, save_path=None):
     
     fig, axes = plt.subplots(3, 1, figsize=(14, 10))
     
-    # 1. Battery levels over time
     im1 = axes[0].imshow(battery_levels.T, aspect='auto', cmap='RdYlGn', vmin=0, vmax=1)
     axes[0].set_ylabel('Agent ID')
     axes[0].set_title('Battery Levels Over Episode')
     plt.colorbar(im1, ax=axes[0], label='Battery Level')
     
-    # 2. Charge rates
-    charge_rates = actions[:, :, 0]  # First action dimension
+    charge_rates = actions[:, :, 0]
     im2 = axes[1].imshow(charge_rates.T, aspect='auto', cmap='RdBu', vmin=-1, vmax=1)
     axes[1].set_ylabel('Agent ID')
     axes[1].set_title('Charge Rates (Red=Discharge, Blue=Charge)')
     plt.colorbar(im2, ax=axes[1], label='Charge Rate')
     
-    # 3. Grid interactions
-    grid_actions = actions[:, :, 1]  # Second action dimension
+    grid_actions = actions[:, :, 1]
     im3 = axes[2].imshow(grid_actions.T, aspect='auto', cmap='PiYG', vmin=-1, vmax=1)
     axes[2].set_xlabel('Time Step (Hour)')
     axes[2].set_ylabel('Agent ID')
@@ -154,9 +151,4 @@ def plot_nash_equilibrium_analysis(agent_strategies):
     Args:
         agent_strategies: List of strategy vectors for each agent
     """
-    # TODO: Implement Nash equilibrium check
-    # This would involve:
-    # 1. Fix all agents' strategies except one
-    # 2. Check if deviating improves that agent's reward
-    # 3. Repeat for all agents
     pass
