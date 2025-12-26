@@ -1,0 +1,17 @@
+{
+  "model_path": "../results/checkpoints/maddpg_best.pt",
+  "n_agents": 20,
+  "n_episodes": 365,
+  "max_steps": 24,
+  "statistics": {
+    "total_reward": {
+      "mean": 16.478068778214844,
+      "std": 3.710995727740661,
+      "min": 11.249584771839126,
+      "max": 27.45008068189415,
+      "median": 14.850094333551707
+    },
+    "episode_length": {
+      "mean": 24.0,
+      "std": 0.0,
+      "min": 
