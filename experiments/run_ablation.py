@@ -140,7 +140,10 @@ def main():
     print("=== Running Ablation Studies ===")
     
     # 1. Number of agents
-    agent_results = ablation_num_agents(agent_counts=[2, 5, 10], n_episodes=500)
+    agent_results = ablation_num_agents(
+        agent_counts=[2, 5, 10, 20],  
+        n_episodes=2000  
+)
     
     # Save results
     with open('../results/ablation_results.json', 'w') as f:

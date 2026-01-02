@@ -343,9 +343,9 @@ if __name__ == '__main__':
                        help='Run mode: single training, full ablation, or evaluate')
     parser.add_argument('--beta', type=float, default=10.0,  # CHANGED DEFAULT
                        help='Terminal battery value (for single mode)')
-    parser.add_argument('--n_agents', type=int, default=5,
+    parser.add_argument('--n_agents', type=int, default=20,
                        help='Number of agents')
-    parser.add_argument('--n_episodes', type=int, default=1000,
+    parser.add_argument('--n_episodes', type=int, default=2000,
                        help='Number of training episodes')
     
     args = parser.parse_args()

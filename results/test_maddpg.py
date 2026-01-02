@@ -13,7 +13,7 @@ import os
 
 def test_maddpg(
     model_path='../results/checkpoints/maddpg_best.pt',
-    n_agents=20,
+    n_agents=5,
     n_episodes=365,
     max_steps=24,
     device='cuda' if torch.cuda.is_available() else 'cpu',
@@ -340,10 +340,9 @@ def plot_test_results(episode_rewards, individual_rewards, stats):
     plt.show()
 
 if __name__ == '__main__':
-    # Test the trained model
     results = test_maddpg(
-        model_path='../results/checkpoints/maddpg_best.pt',
-        n_agents=20,
+        model_path='../results/checkpoints/maddpg_20agents_best.pt',  # Update path
+        n_agents=20,  
         n_episodes=365,
         max_steps=24,
         save_results=True

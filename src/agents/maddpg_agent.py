@@ -96,8 +96,8 @@ class MADDPGAgent:
         lr_actor=1e-3,
         lr_critic=1e-3,
         gamma=0.99,
-        tau=0.01,  # Soft update parameter
-        buffer_capacity=100000,
+        tau=0.01,
+        buffer_capacity=100000,  
         device='cpu'
     ):
         self.n_agents = n_agents
@@ -144,9 +144,9 @@ class MADDPGAgent:
         self.replay_buffer = ReplayBuffer(buffer_capacity)
         
         # Exploration noise
-        self.noise_scale = 0.1
+        self.noise_scale = 0.2
         self.noise_decay = 0.9995
-        self.noise_min = 0.01
+        self.noise_min = 0.05
     
     def select_actions(self, observations, explore=True):
         """

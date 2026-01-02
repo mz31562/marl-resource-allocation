@@ -1,0 +1,166 @@
+{
+  "n_agents": 20,
+  "n_days": 365,
+  "agent_info": [
+    {
+      "agent_id": 0,
+      "battery_capacity": 14.132163356386851,
+      "battery_efficiency": 0.9249742029487672,
+      "solar_capacity": 7.861405900005654,
+      "has_ev": true,
+      "household_type": "work_from_home"
+    },
+    {
+      "agent_id": 1,
+      "battery_capacity": 13.690988319064529,
+      "battery_efficiency": 0.9298619122919233,
+      "solar_capacity": 5.1864738048080286,
+      "has_ev": true,
+      "household_type": "work_from_home"
+    },
+    {
+      "agent_id": 2,
+      "battery_capacity": 10.260232934120275,
+      "battery_efficiency": 0.9400135168870354,
+      "solar_capacity": 4.813893008406778,
+      "has_ev": true,
+      "household_type": "single"
+    },
+    {
+      "agent_id": 3,
+      "battery_capacity": 13.853737399602927,
+      "battery_efficiency": 0.9464666734623715,
+      "solar_capacity": 7.206343437420978,
+      "has_ev": true,
+      "household_type": "couple"
+    },
+    {
+      "agent_id": 4,
+      "battery_capacity": 13.257031680542434,
+      "battery_efficiency": 0.900143942244396,
+      "solar_capacity": 3.956651266390978,
+      "has_ev": false,
+      "household_type": "work_from_home"
+    },
+    {
+      "agent_id": 5,
+      "battery_capacity": 14.097293999276538,
+      "battery_efficiency": 0.9264319764672246,
+      "solar_capacity": 6.424019232516861,
+      "has_ev": false,
+      "household_type": "work_from_home"
+    },
+    {
+      "agent_id": 6,
+      "battery_capacity": 13.284182327182645,
+      "battery_efficiency": 0.9461548031626114,
+      "solar_capacity": 3.8006954743541983,
+      "has_ev": false,
+      "household_type": "single"
+    },
+    {
+      "agent_id": 7,
+      "battery_capacity": 12.764717112790583,
+      "battery_efficiency": 0.9342458632554969,
+      "solar_capacity": 3.4732187438319997,
+      "has_ev": false,
+      "household_type": "work_from_home"
+    },
+    {
+      "agent_id": 8,
+      "battery_capacity": 10.271832654882498,
+      "battery_efficiency": 0.9421529896071077,
+      "solar_capacity": 4.349541257551762,
+      "has_ev": false,
+      "household_type": "couple"
+    },
+    {
+      "agent_id": 9,
+      "battery_capacity": 14.513473916018805,
+      "battery_efficiency": 0.9345798039486534,
+      "solar_capacity": 5.180059437692011,
+      "has_ev": false,
+      "household_type": "family"
+    },
+    {
+      "agent_id": 10,
+      "battery_capacity": 14.958320450281743,
+      "battery_efficiency": 0.9067347880164519,
+      "solar_capacity": 6.493053718122994,
+      "has_ev": false,
+      "household_type": "couple"
+    },
+    {
+      "agent_id": 11,
+      "battery_capacity": 8.983642489673294,
+      "battery_efficiency": 0.9239913069845185,
+      "solar_capacity": 4.425473914520538,
+      "has_ev": false,
+      "household_type": "single"
+    },
+    {
+      "agent_id": 12,
+      "battery_capacity": 8.3193874718186,
+      "battery_efficiency": 0.9438817513632601,
+      "solar_capacity": 4.393205871084433,
+      "has_ev": false,
+      "household_type": "single"
+    },
+    {
+      "agent_id": 13,
+      "battery_capacity": 10.004312320080668,
+      "battery_efficiency": 0.9281793693831732,
+      "solar_capacity": 4.942550823822161,
+      "has_ev": false,
+      "household_type": "family"
+    },
+    {
+      "agent_id": 14,
+      "battery_capacity": 10.535126695529078,
+      "battery_efficiency": 0.9281431518563434,
+      "solar_capacity": 6.0864105435100395,
+      "has_ev": false,
+      "household_type": "couple"
+    },
+    {
+      "agent_id": 15,
+      "battery_capacity": 8.303454999199737,
+      "battery_efficiency": 0.9378643478204061,
+      "solar_capacity": 7.4826879612272545,
+      "has_ev": false,
+      "household_type": "single"
+    },
+    {
+      "agent_id": 16,
+      "battery_capacity": 9.138853113275928,
+      "battery_efficiency": 0.9102040519479184,
+      "solar_capacity": 5.313496042348992,
+      "has_ev": false,
+      "household_type": "work_from_home"
+    },
+    {
+      "agent_id": 17,
+      "battery_capacity": 8.031419011378993,
+      "battery_efficiency": 0.9405197293473958,
+      "solar_capacity": 3.425410799583373,
+      "has_ev": false,
+      "household_type": "family"
+    },
+    {
+      "agent_id": 18,
+      "battery_capacity": 9.13986378924479,
+      "battery_efficiency": 0.9021914273913968,
+      "solar_capacity": 5.5045214533820195,
+      "has_ev": false,
+      "household_type": "work_from_home"
+    },
+    {
+      "agent_id": 19,
+      "battery_capacity": 11.79519394995207,
+      "battery_efficiency": 0.9107734372731817,
+      "solar_capacity": 5.19906987967336,
+      "has_ev": false,
+      "household_type": "work_from_home"
+    }
+  ]
+}

@@ -24,13 +24,14 @@ class SmartGridEnv(gym.Env):
     
     def __init__(
         self,
-        n_agents: int = 5,
-        grid_capacity: float = 50.0,
+        n_agents: int = 20,  
+        grid_capacity: float = 100.0,  
         battery_capacity: float = 10.0,
         episode_length: int = 24,
-        terminal_battery_value: float = 0.0,  # NEW PARAMETER
+        terminal_battery_value: float = 10.0,  
         seed: int = None
     ):
+
         super().__init__()
         
         self.n_agents = n_agents

@@ -3,260 +3,290 @@ sys.path.append('..')
 
 import torch
 import numpy as np
-from tqdm import tqdm
-from src.environments.grid_env import SmartGridEnv
-from src.agents.maddpg_agent import MADDPGAgent
-from src.agents.ppo_agent import PPOAgent
 import matplotlib.pyplot as plt
-import seaborn as sns
-from scipy import stats
+from tqdm import tqdm
 
-def load_trained_maddpg(n_agents, obs_dim, action_dim, checkpoint_path):
-    """Load trained MADDPG model."""
-    maddpg = MADDPGAgent(n_agents=n_agents, obs_dim=obs_dim, action_dim=action_dim)
-    maddpg.load(checkpoint_path)
-    return maddpg
+from src.environments.dataset_driven_env import DatasetDrivenSmartGridEnv
+from src.agents.maddpg_agent import MADDPGAgent
 
-def evaluate_policy(maddpg, env, n_episodes=100, deterministic=True):
+
+def evaluate_model(
+    checkpoint_path,
+    dataset_path,
+    n_agents=5,
+    n_episodes=100
+):
     """
-    Evaluate trained policy.
+    Comprehensive evaluation of trained model.
+    """
     
-    Returns detailed metrics including:
-    - Episode rewards
-    - Individual agent rewards
-    - Grid stability
-    - Battery usage
-    - Social welfare
-    """
+    device = 'cuda' if torch.cuda.is_available() else 'cpu'
+    print(f"{'='*70}")
+    print(f"EVALUATING MODEL")
+    print(f"{'='*70}")
+    print(f"Checkpoint: {checkpoint_path}")
+    print(f"Dataset: {dataset_path}")
+    print(f"Device: {device}\n")
+    
+    # Create test environment
+    env = DatasetDrivenSmartGridEnv(
+        dataset_path=dataset_path,
+        n_agents=n_agents,
+        mode='test',
+        terminal_battery_value=10.0
+    )
+    
+    # Load trained agent
+    obs_dim = env.observation_space.shape[0]
+    action_dim = env.action_space.shape[0]
+    
+    maddpg = MADDPGAgent(
+        n_agents=n_agents,
+        obs_dim=obs_dim,
+        action_dim=action_dim,
+        device=device
+    )
+    
+    print("Loading model...")
+    maddpg.load(checkpoint_path)
+    print("✓ Model loaded\n")
+    
+    # Evaluation metrics
     episode_rewards = []
-    individual_rewards = {i: [] for i in range(env.n_agents)}
-    grid_penalties = []
-    battery_usage = {i: [] for i in range(env.n_agents)}
-    final_batteries = {i: [] for i in range(env.n_agents)}
+    individual_rewards = {i: [] for i in range(n_agents)}
+    final_batteries = []
+    grid_violations = 0
+    total_grid_penalties = []
+    
+    print(f"Running {n_episodes} evaluation episodes...\n")
     
     for episode in tqdm(range(n_episodes), desc="Evaluating"):
         obs_dict, info = env.reset()
         episode_reward = 0
-        agent_rewards = {i: 0 for i in range(env.n_agents)}
+        agent_rewards = {i: 0 for i in range(n_agents)}
         episode_grid_penalty = 0
         
-        episode_battery_history = {i: [] for i in range(env.n_agents)}
-        
         for step in range(24):
-            # Select actions (no exploration)
+            # Select actions (deterministic)
             actions = maddpg.select_actions(obs_dict, explore=False)
             
-            # Step
-            next_obs, rewards, dones, truncated, info = env.step(actions)
+            # Step environment
+            next_obs_dict, rewards_dict, dones_dict, truncated, info = env.step(actions)
             
             # Track metrics
-            episode_reward += sum(rewards.values())
-            for i in range(env.n_agents):
-                agent_rewards[i] += rewards[i]
-                episode_battery_history[i].append(info['battery_levels'][i])
+            episode_reward += sum(rewards_dict.values())
+            for i in range(n_agents):
+                agent_rewards[i] += rewards_dict[i]
             
-            if 'grid_penalty' in info:
+            if 'grid_penalty' in info and info['grid_penalty'] < 0:
                 episode_grid_penalty += info['grid_penalty']
+                grid_violations += 1
             
-            obs_dict = next_obs
+            obs_dict = next_obs_dict
             
-            if dones['__all__']:
+            if dones_dict['__all__']:
                 break
         
+        # Store episode metrics
         episode_rewards.append(episode_reward)
-        grid_penalties.append(episode_grid_penalty)
+        final_batteries.append(info['avg_battery'])
+        total_grid_penalties.append(episode_grid_penalty)
         
-        for i in range(env.n_agents):
+        for i in range(n_agents):
             individual_rewards[i].append(agent_rewards[i])
-            battery_usage[i].append(np.std(episode_battery_history[i]))
-            final_batteries[i].append(episode_battery_history[i][-1])
     
-    return {
-        'episode_rewards': episode_rewards,
-        'individual_rewards': individual_rewards,
-        'grid_penalties': grid_penalties,
-        'battery_usage': battery_usage,
-        'final_batteries': final_batteries
+    # Calculate statistics
+    results = {
+        'mean_reward': np.mean(episode_rewards),
+        'std_reward': np.std(episode_rewards),
+        'median_reward': np.median(episode_rewards),
+        'min_reward': np.min(episode_rewards),
+        'max_reward': np.max(episode_rewards),
+        'mean_battery': np.mean(final_batteries),
+        'std_battery': np.std(final_batteries),
+        'grid_violations': grid_violations,
+        'violation_rate': grid_violations / (n_episodes * 24) * 100,
+        'mean_grid_penalty': np.mean(total_grid_penalties),
     }
+    
+    # Individual agent fairness
+    individual_means = [np.mean(individual_rewards[i]) for i in range(n_agents)]
+    results['agent_fairness_std'] = np.std(individual_means)
+    results['agent_fairness_range'] = np.max(individual_means) - np.min(individual_means)
+    
+    # Print results
+    print(f"\n{'='*70}")
+    print(f"EVALUATION RESULTS")
+    print(f"{'='*70}\n")
+    
+    print(f"Episode Performance:")
+    print(f"  Mean Reward:     {results['mean_reward']:>8.2f} ± {results['std_reward']:.2f}")
+    print(f"  Median Reward:   {results['median_reward']:>8.2f}")
+    print(f"  Min Reward:      {results['min_reward']:>8.2f}")
+    print(f"  Max Reward:      {results['max_reward']:>8.2f}")
+    
+    print(f"\nBattery Management:")
+    print(f"  Mean Final Level: {results['mean_battery']:>7.1%} ± {results['std_battery']:.1%}")
+    
+    print(f"\nGrid Stability:")
+    print(f"  Violations:       {results['grid_violations']:>8d} / {n_episodes * 24}")
+    print(f"  Violation Rate:   {results['violation_rate']:>7.2f}%")
+    print(f"  Mean Penalty:     {results['mean_grid_penalty']:>8.2f}")
+    
+    print(f"\nAgent Fairness:")
+    print(f"  Std Dev:          {results['agent_fairness_std']:>8.2f}")
+    print(f"  Range:            {results['agent_fairness_range']:>8.2f}")
+    
+    print(f"\n{'='*70}\n")
+    
+    # Create visualizations
+    plot_evaluation_results(
+        episode_rewards,
+        individual_rewards,
+        final_batteries,
+        total_grid_penalties
+    )
+    
+    return results
 
-def calculate_metrics(results):
-    """Calculate statistical metrics from results."""
-    metrics = {}
-    
-    # Overall performance
-    metrics['mean_reward'] = np.mean(results['episode_rewards'])
-    metrics['std_reward'] = np.std(results['episode_rewards'])
-    metrics['median_reward'] = np.median(results['episode_rewards'])
-    
-    # Individual agent performance
-    individual_means = [np.mean(results['individual_rewards'][i]) 
-                       for i in results['individual_rewards'].keys()]
-    metrics['mean_individual_reward'] = np.mean(individual_means)
-    metrics['fairness_gini'] = calculate_gini_coefficient(individual_means)
-    
-    # Grid stability
-    metrics['mean_grid_penalty'] = np.mean(results['grid_penalties'])
-    metrics['grid_violations'] = np.sum(np.array(results['grid_penalties']) < 0)
-    
-    # Battery management
-    battery_final_means = [np.mean(results['final_batteries'][i]) 
-                          for i in results['final_batteries'].keys()]
-    metrics['mean_final_battery'] = np.mean(battery_final_means)
-    metrics['battery_efficiency'] = 1.0 - np.mean([np.mean(results['battery_usage'][i]) 
-                                                    for i in results['battery_usage'].keys()])
-    
-    return metrics
 
-def calculate_gini_coefficient(values):
-    """
-    Calculate Gini coefficient for fairness analysis.
-    0 = perfect equality, 1 = perfect inequality
-    """
-    values = np.array(values)
-    values = np.sort(values)
-    n = len(values)
-    index = np.arange(1, n + 1)
-    return (2 * np.sum(index * values)) / (n * np.sum(values)) - (n + 1) / n
-
-def plot_evaluation_results(results, metrics):
+def plot_evaluation_results(episode_rewards, individual_rewards, batteries, penalties):
     """Create comprehensive evaluation plots."""
-    fig = plt.figure(figsize=(16, 12))
-    gs = fig.add_gridspec(3, 3, hspace=0.3, wspace=0.3)
+    
+    fig = plt.figure(figsize=(16, 10))
     
     # 1. Reward distribution
-    ax1 = fig.add_subplot(gs[0, 0])
-    ax1.hist(results['episode_rewards'], bins=30, alpha=0.7, color='blue', edgecolor='black')
-    ax1.axvline(metrics['mean_reward'], color='red', linestyle='--', linewidth=2, label='Mean')
-    ax1.axvline(metrics['median_reward'], color='green', linestyle='--', linewidth=2, label='Median')
+    ax1 = plt.subplot(2, 3, 1)
+    ax1.hist(episode_rewards, bins=30, alpha=0.7, color='blue', edgecolor='black')
+    ax1.axvline(np.mean(episode_rewards), color='red', linestyle='--', 
+               linewidth=2, label=f'Mean: {np.mean(episode_rewards):.2f}')
+    ax1.axvline(np.median(episode_rewards), color='green', linestyle='--',
+               linewidth=2, label=f'Median: {np.median(episode_rewards):.2f}')
     ax1.set_xlabel('Episode Reward')
     ax1.set_ylabel('Frequency')
     ax1.set_title('Reward Distribution')
     ax1.legend()
     ax1.grid(True, alpha=0.3)
     
-    # 2. Individual agent performance
-    ax2 = fig.add_subplot(gs[0, 1])
-    individual_means = [np.mean(results['individual_rewards'][i]) 
-                       for i in results['individual_rewards'].keys()]
-    individual_stds = [np.std(results['individual_rewards'][i]) 
-                      for i in results['individual_rewards'].keys()]
-    agents = list(range(len(individual_means)))
-    ax2.bar(agents, individual_means, yerr=individual_stds, capsize=5, alpha=0.7, color='orange')
-    ax2.set_xlabel('Agent ID')
-    ax2.set_ylabel('Mean Reward')
-    ax2.set_title(f'Individual Agent Performance (Gini: {metrics["fairness_gini"]:.3f})')
-    ax2.grid(True, alpha=0.3, axis='y')
+    # 2. Rewards over episodes
+    ax2 = plt.subplot(2, 3, 2)
+    ax2.plot(episode_rewards, alpha=0.6, color='blue')
+    ax2.axhline(np.mean(episode_rewards), color='red', linestyle='--', alpha=0.5)
+    ax2.set_xlabel('Episode')
+    ax2.set_ylabel('Total Reward')
+    ax2.set_title('Episode Rewards')
+    ax2.grid(True, alpha=0.3)
     
-    # 3. Grid penalties over episodes
-    ax3 = fig.add_subplot(gs[0, 2])
-    ax3.plot(results['grid_penalties'], alpha=0.6, color='red')
-    ax3.axhline(0, color='black', linestyle='--', linewidth=1)
-    ax3.set_xlabel('Episode')
-    ax3.set_ylabel('Grid Penalty')
-    ax3.set_title(f'Grid Stability (Violations: {metrics["grid_violations"]})')
-    ax3.grid(True, alpha=0.3)
+    # 3. Individual agent performance
+    ax3 = plt.subplot(2, 3, 3)
+    individual_means = [np.mean(individual_rewards[i]) for i in individual_rewards.keys()]
+    individual_stds = [np.std(individual_rewards[i]) for i in individual_rewards.keys()]
+    agents = list(individual_rewards.keys())
+    ax3.bar(agents, individual_means, yerr=individual_stds, capsize=3, alpha=0.7, color='orange')
+    ax3.set_xlabel('Agent ID')
+    ax3.set_ylabel('Mean Reward')
+    ax3.set_title('Individual Agent Performance')
+    ax3.grid(True, alpha=0.3, axis='y')
     
-    # 4. Battery final levels distribution
-    ax4 = fig.add_subplot(gs[1, 0])
-    all_final_batteries = []
-    for i in results['final_batteries'].keys():
-        all_final_batteries.extend(results['final_batteries'][i])
-    ax4.hist(all_final_batteries, bins=20, alpha=0.7, color='green', edgecolor='black')
-    ax4.axvline(metrics['mean_final_battery'], color='red', linestyle='--', linewidth=2)
+    # 4. Battery level distribution
+    ax4 = plt.subplot(2, 3, 4)
+    ax4.hist(batteries, bins=20, alpha=0.7, color='green', edgecolor='black')
+    ax4.axvline(np.mean(batteries), color='red', linestyle='--',
+               linewidth=2, label=f'Mean: {np.mean(batteries):.3f}')
+    ax4.axvline(0.3, color='orange', linestyle='--', linewidth=1, 
+               alpha=0.5, label='Target: 0.30')
     ax4.set_xlabel('Final Battery Level')
     ax4.set_ylabel('Frequency')
-    ax4.set_title(f'Battery Management (Mean: {metrics["mean_final_battery"]:.2f})')
+    ax4.set_title('Battery Management')
+    ax4.legend()
     ax4.grid(True, alpha=0.3)
     
-    # 5. Battery usage variance (efficiency)
-    ax5 = fig.add_subplot(gs[1, 1])
-    battery_usage_means = [np.mean(results['battery_usage'][i]) 
-                          for i in results['battery_usage'].keys()]
-    ax5.bar(agents, battery_usage_means, alpha=0.7, color='purple')
-    ax5.set_xlabel('Agent ID')
-    ax5.set_ylabel('Battery Usage Variance')
-    ax5.set_title(f'Battery Efficiency (Score: {metrics["battery_efficiency"]:.3f})')
-    ax5.grid(True, alpha=0.3, axis='y')
+    # 5. Grid penalties
+    ax5 = plt.subplot(2, 3, 5)
+    violation_episodes = [i for i, p in enumerate(penalties) if p < 0]
+    ax5.scatter(violation_episodes, [penalties[i] for i in violation_episodes], 
+               color='red', alpha=0.6, s=30)
+    ax5.axhline(0, color='black', linestyle='-', linewidth=1)
+    ax5.set_xlabel('Episode')
+    ax5.set_ylabel('Grid Penalty')
+    ax5.set_title(f'Grid Violations ({len(violation_episodes)} episodes)')
+    ax5.grid(True, alpha=0.3)
     
-    # 6. Reward correlation matrix (cooperation analysis)
-    ax6 = fig.add_subplot(gs[1, 2])
-    reward_matrix = np.array([results['individual_rewards'][i] 
-                             for i in results['individual_rewards'].keys()])
-    corr_matrix = np.corrcoef(reward_matrix)
-    sns.heatmap(corr_matrix, annot=True, fmt='.2f', cmap='coolwarm', 
-                center=0, ax=ax6, cbar_kws={'label': 'Correlation'})
-    ax6.set_title('Agent Reward Correlation')
-    ax6.set_xlabel('Agent ID')
-    ax6.set_ylabel('Agent ID')
+    # 6. Cumulative reward
+    ax6 = plt.subplot(2, 3, 6)
+    cumulative = np.cumsum(episode_rewards)
+    ax6.plot(cumulative, linewidth=2, color='purple')
+    ax6.set_xlabel('Episode')
+    ax6.set_ylabel('Cumulative Reward')
+    ax6.set_title('Cumulative Performance')
+    ax6.grid(True, alpha=0.3)
     
-    # 7. Cumulative rewards over episodes
-    ax7 = fig.add_subplot(gs[2, :])
-    cumulative = np.cumsum(results['episode_rewards'])
-    ax7.plot(cumulative, linewidth=2, color='blue')
-    ax7.set_xlabel('Episode')
-    ax7.set_ylabel('Cumulative Reward')
-    ax7.set_title('Learning Progress (Cumulative Reward)')
-    ax7.grid(True, alpha=0.3)
-    
-    plt.savefig('../results/figures/evaluation_comprehensive.png', dpi=300, bbox_inches='tight')
-    plt.show()
+    plt.tight_layout()
+    plt.savefig('../results/figures/evaluation_results.png', dpi=300, bbox_inches='tight')
+    print("✓ Visualization saved to ../results/figures/evaluation_results.png")
+    plt.close()
 
-def statistical_comparison(method1_results, method2_results, method1_name, method2_name):
-    """
-    Perform statistical significance testing.
-    Uses Mann-Whitney U test (non-parametric).
-    """
-    rewards1 = method1_results['episode_rewards']
-    rewards2 = method2_results['episode_rewards']
-    
-    # Mann-Whitney U test
-    statistic, p_value = stats.mannwhitneyu(rewards1, rewards2, alternative='two-sided')
-    
-    print(f"\n=== Statistical Comparison ===")
-    print(f"{method1_name} vs {method2_name}")
-    print(f"Mean: {np.mean(rewards1):.2f} vs {np.mean(rewards2):.2f}")
-    print(f"Median: {np.median(rewards1):.2f} vs {np.median(rewards2):.2f}")
-    print(f"Mann-Whitney U statistic: {statistic:.2f}")
-    print(f"P-value: {p_value:.4f}")
-    
-    if p_value < 0.05:
-        print(f"✓ Difference is statistically significant (p < 0.05)")
-        if np.mean(rewards1) > np.mean(rewards2):
-            print(f"  {method1_name} performs significantly better")
-        else:
-            print(f"  {method2_name} performs significantly better")
-    else:
-        print(f"✗ No statistically significant difference (p >= 0.05)")
-    
-    return p_value
 
-def main():
-    """Main evaluation pipeline."""
-    n_agents = 20
-    device = 'cuda' if torch.cuda.is_available() else 'cpu'
+def compare_with_baseline():
+    """Compare trained model with random baseline."""
+    from src.agents.random_agent import RandomAgent
     
-    # Create environment
-    env = SmartGridEnv(n_agents=n_agents)
-    obs_dim = env.observation_space.shape[0]
-    action_dim = env.action_space.shape[0]
+    print(f"\n{'='*70}")
+    print("COMPARING WITH BASELINE")
+    print(f"{'='*70}\n")
     
-    print("Loading trained models...")
+    # Test environment
+    env = DatasetDrivenSmartGridEnv(
+        dataset_path='../data/processed/dataset_20agents_365days.npz',
+        n_agents=5,
+        mode='test'
+    )
     
-    # Load MADDPG
-    maddpg = load_trained_maddpg(n_agents, obs_dim, action_dim, 
-                                '../results/checkpoints/maddpg_best.pt')
+    # Random agent
+    random_rewards = []
+    for episode in tqdm(range(100), desc="Random Baseline"):
+        obs_dict, _ = env.reset()
+        episode_reward = 0
+        
+        for step in range(24):
+            actions = {i: env.action_space.sample() for i in range(20)}
+            obs_dict, rewards, dones, _, _ = env.step(actions)
+            episode_reward += sum(rewards.values())
+        
+        random_rewards.append(episode_reward)
     
-    print("\nEvaluating MADDPG...")
-    maddpg_results = evaluate_policy(maddpg, env, n_episodes=100)
-    maddpg_metrics = calculate_metrics(maddpg_results)
+    print(f"\nBaseline Performance: {np.mean(random_rewards):.2f} ± {np.std(random_rewards):.2f}")
     
-    print("\n=== MADDPG Performance ===")
-    for key, value in maddpg_metrics.items():
-        print(f"{key}: {value:.4f}")
-    
-    plot_evaluation_results(maddpg_results, maddpg_metrics)
-    
-    return maddpg_results, maddpg_metrics
+    return np.mean(random_rewards)
+
 
 if __name__ == '__main__':
-    results, metrics = main()
+    import argparse
+    
+    parser = argparse.ArgumentParser()
+    parser.add_argument('--checkpoint', type=str,
+                    default='../results/checkpoints/maddpg_5agents_test_best.pt',
+                    help='Path to model checkpoint')
+    parser.add_argument('--dataset', type=str,
+                    default='../data/processed/dataset_5agents.npz',
+                    help='Path to dataset')
+    parser.add_argument('--n_agents', type=int, default=20)
+    parser.add_argument('--n_episodes', type=int, default=100)
+    parser.add_argument('--compare_baseline', action='store_true',
+                       help='Also evaluate random baseline')
+    
+    args = parser.parse_args()
+    
+    # Evaluate trained model
+    results = evaluate_model(
+        checkpoint_path=args.checkpoint,
+        dataset_path=args.dataset,
+        n_agents=args.n_agents,
+        n_episodes=args.n_episodes
+    )
+    
+    # Compare with baseline
+    if args.compare_baseline:
+        baseline_reward = compare_with_baseline()
+        improvement = ((results['mean_reward'] - baseline_reward) / abs(baseline_reward)) * 100
+        print(f"\nImprovement over baseline: {improvement:+.1f}%")
