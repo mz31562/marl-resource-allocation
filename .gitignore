@@ -1,0 +1,108 @@
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+build/
+develop-eggs/
+dist/
+downloads/
+eggs/
+.eggs/
+lib/
+lib64/
+parts/
+sdist/
+var/
+wheels/
+pip-wheel-metadata/
+share/python-wheels/
+*.egg-info/
+.installed.cfg
+*.egg
+MANIFEST
+
+# Virtual Environments
+venv/
+env/
+ENV/
+env.bak/
+venv.bak/
+.venv/
+virtualenv/
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+.project
+.pydevproject
+.settings/
+*.sublime-project
+*.sublime-workspace
+
+# OS
+.DS_Store
+Thumbs.db
+.Windows-thumbnail.db
+
+# Jupyter Notebook
+.ipynb_checkpoints
+*.ipynb_checkpoints
+
+# IPython
+.ipython/
+.iphistory
+
+# Testing
+.pytest_cache/
+.coverage
+.coverage.*
+htmlcov/
+.tox/
+.hypothesis/
+
+# Output files
+*.log
+logs/
+*.csv
+*.json
+temp/
+tmp/
+
+# Data files (large files - keep directory structure)
+data/processed/*.npz
+data/processed/*.json
+data/raw/*
+
+# Results and checkpoints
+results/**/*.pt
+results/**/*.pth
+results/**/logs/*
+results/**/figures/*.png
+results/**/figures/*.pdf
+results/**/data/*
+!/results/.gitkeep
+
+# Experiment outputs
+experiments/__pycache__/
+experiments/*.log
+
+# Mac
+.AppleDouble
+.LSOverride
+
+# Environment variables
+.env
+.env.local
+.env.*.local
+
+# Misc
+*.bak
+*.swp
+.DS_Store
+*.pyc
+.cache/
